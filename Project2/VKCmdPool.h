@@ -6,9 +6,10 @@
 #include "VKUtil.h"
 #include "VKAllocator.h"
 #include "VKSecCmdBuffer.h"
+#include "PoolBase.h"
 class VKSecCmdBuffer;
 
-class VKCmdPool
+class VKCmdPool:public PoolBase
 {
 public:
     VKCmdPool(VKApp* vkApp, const QueueFamilyIndices& index) :app(vkApp) {
@@ -28,7 +29,7 @@ public:
     }
 public:
     
-    VkCommandBuffer beginSingleTimeCommands(uint32_t flag = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT) {
+    VkCommandBuffer beginSingleTimeCommands(uint32_t flag = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT) override {
         //录制commanfBuffer起始配置
         VkCommandBufferAllocateInfo allocInfo{};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -51,7 +52,7 @@ public:
         }
         return commandBuffer;
     }
-    void endSingleTimeCommands(VkCommandBuffer commandBuffer, VkQueue queue) {
+    void endSingleTimeCommands(VkCommandBuffer commandBuffer, VkQueue queue) override  {
         //录制commanfBuffer结束配置
         vkEndCommandBuffer(commandBuffer);
 
@@ -70,16 +71,16 @@ public:
         //把copyBuffer command 还给 command pool
         vkFreeCommandBuffers(app->getDevice()->getLogicalDevice(), pool, 1, &commandBuffer);
     }
-    VkCommandPool getCommandPool() {
+    VkCommandPool getCommandPool() override  {
         return pool;
     }
 
-    VKSecCmdBuffer* createSecondaryCommand(uint32_t count) {
+    VKSecCmdBuffer* createSecondaryCommand(uint32_t count) override  {
         auto commandBuffer = new VKSecCmdBuffer(app, pool);
         commandBuffer->create(count);
         return commandBuffer;
     }
-    void release() {
+    void release() override {
         if (pool) {
             vkDestroyCommandPool(app->getDevice()->getLogicalDevice(), pool, nullptr);
             pool = VK_NULL_HANDLE;

@@ -8,17 +8,15 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <vulkan/vulkan.h>
-//#include "Pipeline.h"
+#include "PipeLineBase.h"
 
 //#include <VK_DynamicState.h>
-
-class Pipeline;
 
 class DynamicState
 {
 public:
     DynamicState() = delete;
-    DynamicState(Pipeline* pipeLine) :pipeline(pipeLine) {
+    DynamicState(PipeLineBase* pipeLine) :pipeline(pipeLine) {
 
     }
 public:
@@ -118,7 +116,7 @@ public:
         pipeline->setNeedRecreate();
     }
 private:
-    Pipeline* pipeline = nullptr;
+    PipeLineBase* pipeline = nullptr;
 
     std::vector<VkDynamicState> dynamicStates;
     VkPipelineDynamicStateCreateInfo pipelineDynamicStateCreateInfo{};

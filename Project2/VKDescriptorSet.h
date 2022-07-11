@@ -17,7 +17,9 @@ public:
     DescriptorSets(VKApp* vkApp) :app(vkApp) {
 
     }
-    ~DescriptorSets();
+    ~DescriptorSets() {
+
+    }
 public:
     void init(VkDescriptorPool pool, VkDescriptorSetLayout setLayout) {
         //分配描述符集数组

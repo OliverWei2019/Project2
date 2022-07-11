@@ -5,6 +5,10 @@
 #include <vulkan/vulkan.h>
 #include "VKApp.h"
 #include "VMAllocator.h"
+#include "VKImages.h"
+#include "VKImageView.h"
+#include "VKSwapChain.h"
+
 //#include "VKUtil.h"
 // G-Buffer framebuffer attachments
 struct FrameBufferAttachment {

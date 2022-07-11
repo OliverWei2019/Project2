@@ -8,22 +8,11 @@
 #include "VKApp.h"
 #include "ShaderSet.h"
 #include "Buffer.h"
-//#include "VK_PushDescriptor.h"
-#include "VKDescriptorSet.h"
-#include "VKDescriptorSetLayout.h"
-#include "VKDescriptorPool.h"
-#include "PipelineLayout.h"
 #include "DynamicState.h"
-#include "VKPipelineCache.h"
-#include "VKRenderPass.h"
-#include "PushDescriptor.h"
-//#include "VK_SecondaryCommandBufferCallback.h"
-#include "VKSecCmdBuffer.h"
 
-//class VK_ContextImpl;
-//class VK_DynamicStateImpl;
+#include "PipeLineBase.h"
 
-class Pipeline
+class Pipeline:public PipeLineBase
 {
     //friend class VK_PipelineDeriveImpl;
 public:
@@ -43,18 +32,18 @@ public:
         vkDynamicState->release();
      }
 public:
-    VKShaderSet* getShaderSet() {
+    VKShaderSet* getShaderSet() override {
         return shaderSet;
     }
-    DynamicState* getDynamicState() {
+    DynamicState* getDynamicState(){
         return vkDynamicState;
     }
 
-    void setVertexInputStateCreateInfo(const VkPipelineVertexInputStateCreateInfo& createInfo) {
+    void setVertexInputStateCreateInfo(const VkPipelineVertexInputStateCreateInfo& createInfo) override {
         vertexInputStateCreateInfo = createInfo;
         needUpdate = true;
     }
-    VkPipelineVertexInputStateCreateInfo getVertexInputStateCreateInfo() {
+    VkPipelineVertexInputStateCreateInfo getVertexInputStateCreateInfo()override {
         if (vertexInputStateCreateInfo.has_value()) {
             return vertexInputStateCreateInfo.value();
         }
@@ -62,11 +51,11 @@ public:
         return parent->getVertexInputStateCreateInfo();
     }
 
-    void setInputAssemblyStateCreateInfo(const VkPipelineInputAssemblyStateCreateInfo& createInfo) {
+    void setInputAssemblyStateCreateInfo(const VkPipelineInputAssemblyStateCreateInfo& createInfo)override {
         inputAssemblyStateCreateInfo = createInfo;
         needUpdate = true;
     }
-    VkPipelineInputAssemblyStateCreateInfo getInputAssemblyStateCreateInfo() {
+    VkPipelineInputAssemblyStateCreateInfo getInputAssemblyStateCreateInfo()override {
         if (inputAssemblyStateCreateInfo.has_value()) {
             return inputAssemblyStateCreateInfo.value();
         }
@@ -74,11 +63,11 @@ public:
         return parent->getInputAssemblyStateCreateInfo();
     }
 
-    void setRasterizationStateCreateInfo(const VkPipelineRasterizationStateCreateInfo& createInfo) {
+    void setRasterizationStateCreateInfo(const VkPipelineRasterizationStateCreateInfo& createInfo)override {
         rasterizationStateCreateInfo = createInfo;
         needUpdate = true;
     }
-    VkPipelineRasterizationStateCreateInfo getRasterizationStateCreateInfo() {
+    VkPipelineRasterizationStateCreateInfo getRasterizationStateCreateInfo()override {
         if (rasterizationStateCreateInfo.has_value()) {
             return rasterizationStateCreateInfo.value();
         }
@@ -86,23 +75,23 @@ public:
         return parent->getRasterizationStateCreateInfo();
     }
 
-    VkPipelineDepthStencilStateCreateInfo getDepthStencilStateCreateInfo() {
+    VkPipelineDepthStencilStateCreateInfo getDepthStencilStateCreateInfo()override {
         if (depthStencilStateCreateInfo.has_value()) {
             return depthStencilStateCreateInfo.value();
         }
         assert(parent);
         return parent->getDepthStencilStateCreateInfo();
     }
-    void setDepthStencilStateCreateInfo(const VkPipelineDepthStencilStateCreateInfo& createInfo) {
+    void setDepthStencilStateCreateInfo(const VkPipelineDepthStencilStateCreateInfo& createInfo)override {
         depthStencilStateCreateInfo = createInfo;
         needUpdate = true;
     }
 
-    void setTessellationStateCreateInfo(const VkPipelineTessellationStateCreateInfo& createInfo) {
+    void setTessellationStateCreateInfo(const VkPipelineTessellationStateCreateInfo& createInfo)override {
         tessellationStateCreateInfo = createInfo;
         needUpdate = true;
     }
-    VkPipelineTessellationStateCreateInfo getTessellationStateCreateInfo() {
+    VkPipelineTessellationStateCreateInfo getTessellationStateCreateInfo()override {
         if (tessellationStateCreateInfo.has_value()) {
             return tessellationStateCreateInfo.value();
         }
@@ -110,11 +99,11 @@ public:
         return parent->getTessellationStateCreateInfo();
     }
 
-    void setMultisampleStateCreateInfo(const VkPipelineMultisampleStateCreateInfo& createInfo) {
+    void setMultisampleStateCreateInfo(const VkPipelineMultisampleStateCreateInfo& createInfo)override {
         multiSampleStateCreateInfo = createInfo;
         needUpdate = true;
     }
-    VkPipelineMultisampleStateCreateInfo getMultisampleStateCreateInfo() {
+    VkPipelineMultisampleStateCreateInfo getMultisampleStateCreateInfo()override {
         if (multiSampleStateCreateInfo.has_value()) {
             return multiSampleStateCreateInfo.value();
         }
@@ -122,11 +111,11 @@ public:
         return parent->getMultisampleStateCreateInfo();
     }
 
-    void setColorBlendStateCreateInfo(const VkPipelineColorBlendStateCreateInfo& createInfo) {
+    void setColorBlendStateCreateInfo(const VkPipelineColorBlendStateCreateInfo& createInfo)override {
         colorBlendStateCreateInfo = createInfo;
         needUpdate = true;
     }
-    VkPipelineColorBlendStateCreateInfo getColorBlendStateCreateInfo() {
+    VkPipelineColorBlendStateCreateInfo getColorBlendStateCreateInfo()override {
         if (colorBlendStateCreateInfo.has_value()) {
             return colorBlendStateCreateInfo.value();
         }
@@ -134,11 +123,11 @@ public:
         return parent->getColorBlendStateCreateInfo();
     }
 
-    void setViewportStateCreateInfo(const VkPipelineViewportStateCreateInfo& createInfo) {
+    void setViewportStateCreateInfo(const VkPipelineViewportStateCreateInfo& createInfo)override {
         viewportStateCreateInfo = createInfo;
         needUpdate = true;
     }
-    VkPipelineViewportStateCreateInfo getViewportStateCreateInfo() {
+    VkPipelineViewportStateCreateInfo getViewportStateCreateInfo()override {
         if (viewportStateCreateInfo.has_value()) {
             return viewportStateCreateInfo.value();
         }
@@ -157,25 +146,25 @@ public:
         initDepthStencilStateCreateInfo();
         initViewportStateCreateInfo(app->getSwapChain()->getSwapChainExtent());
     }
-    void addPushConstant(const VkPushConstantRange& constantRange, const char* data) {
+    void addPushConstant(const VkPushConstantRange& constantRange, const char* data)override {
         pipelineLayout->addPushConstant(constantRange, data);
     }
-    void addPushDescriptor(const VkWriteDescriptorSet& descriptor) {
+    void addPushDescriptor(const VkWriteDescriptorSet& descriptor)override {
         if (!pushDescriptors) {
-            pushDescriptors = std::make_shared< VKPushDescriptor>(app);
+            pushDescriptors = std::make_shared<VKPushDescriptor>(app);
         }
         pushDescriptors->addDescriptor(descriptor);
     }
-    bool create() {
+    bool create() override {
         return createPipeline(VK_PIPELINE_CREATE_ALLOW_DERIVATIVES_BIT);
     }
-    void addRenderBuffer(BufferBase* buffer) {
+    void addRenderBuffer(BufferBase* buffer)override {
         if (buffer) {
             buffers.push_back(buffer);
         }
     }
     //based parent pipeline create new pipeline
-    Pipeline* fork(VKShaderSet* shaderSet) {
+    Pipeline* fork(VKShaderSet* shaderSet)override {
         if (parent) {
             std::cerr << "Pipeline drive failed,current pipeline has parent!" << std::endl;
             return nullptr;
@@ -185,14 +174,14 @@ public:
         return child;
     }
 
-    bool needRecreate() {
+    bool needRecreate()override {
         return needUpdate;
     }
-    void setNeedRecreate() {
+    void setNeedRecreate()override {
         needUpdate = true;
     }
 
-    void render(VkCommandBuffer buffer, uint32_t index) {
+    void render(VkCommandBuffer buffer, uint32_t index) override {
         //绑定描述符集合
         descriptorSets->bind(buffer, pipelineLayout->getPipelineLayout(), index);
         //推送常量
@@ -211,7 +200,7 @@ public:
     }
     void render(VkCommandBuffer buffer, uint32_t index,
         std::shared_ptr<VKSecondaryCommandBufferCallback> caller,
-        uint32_t current, uint32_t total) {
+        uint32_t current, uint32_t total) override {
         //绑定描述符集合
         descriptorSets->bind(buffer, pipelineLayout->getPipelineLayout(), index);
         //推送常量
@@ -232,7 +221,7 @@ public:
         }
     }
 
-    void release() {
+    void release()override {
         if (pipeline) {
             vkDestroyPipeline(app->getDevice()->getLogicalDevice(), pipeline, nullptr);
             pipelineLayout->release();
@@ -241,8 +230,9 @@ public:
         }
         pipeline = nullptr;
     }
-protected:
-    void initVertexInputStateCreateInfo(VKShaderSet* shaderSet) {
+
+public:
+    void initVertexInputStateCreateInfo(VKShaderSet* shaderSet)override {
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
         vertexInputInfo.vertexAttributeDescriptionCount = shaderSet->getVertexAttributeDescriptionCount();
@@ -252,7 +242,7 @@ protected:
         vertexInputInfo.flags = 0;
         setVertexInputStateCreateInfo(vertexInputInfo);
     }
-    void initMultisampleStateCreateInfo(VkSampleCountFlagBits sampleCount) {
+    void initMultisampleStateCreateInfo(VkSampleCountFlagBits sampleCount) override {
         VkPipelineMultisampleStateCreateInfo multisampling = {};
         multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
         multisampling.sampleShadingEnable = VK_FALSE;
@@ -263,7 +253,7 @@ protected:
         //multisampling.alphaToOneEnable = VK_FALSE; // Optional
         setMultisampleStateCreateInfo(multisampling);
     }
-    void initColorBlendStateCreateInfo() {
+    void initColorBlendStateCreateInfo() override {
         VkPipelineColorBlendStateCreateInfo colorBlending = {};
         colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
         colorBlending.logicOpEnable = VK_FALSE;
@@ -276,14 +266,14 @@ protected:
         colorBlending.blendConstants[3] = 0.0f; // Optional
         setColorBlendStateCreateInfo(colorBlending);
     }
-    void initInputAssemblyStateCreateInfo() {
+    void initInputAssemblyStateCreateInfo() override {
         VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
         inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
         inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         inputAssembly.primitiveRestartEnable = VK_FALSE;
         setInputAssemblyStateCreateInfo(inputAssembly);
     }
-    void initRasterizationStateCreateInfo() {
+    void initRasterizationStateCreateInfo() override {
         VkPipelineRasterizationStateCreateInfo rasterizer{};
         rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
         rasterizer.depthClampEnable = VK_FALSE;
@@ -298,7 +288,7 @@ protected:
         rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
         setRasterizationStateCreateInfo(rasterizer);
     }
-    void initDepthStencilStateCreateInfo() {
+    void initDepthStencilStateCreateInfo() override {
         VkPipelineDepthStencilStateCreateInfo depthStencil{};
         depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
         depthStencil.depthTestEnable = VK_TRUE;
@@ -312,7 +302,7 @@ protected:
         depthStencil.front = {};
         setDepthStencilStateCreateInfo(depthStencil);
     }
-    void initColorBlendAttachmentState() {
+    void initColorBlendAttachmentState() override {
         colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
         colorBlendAttachment.blendEnable = VK_FALSE;
         colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
@@ -322,7 +312,7 @@ protected:
         colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
         colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
     }
-    void initViewportStateCreateInfo(VkExtent2D extent) {
+    void initViewportStateCreateInfo(VkExtent2D extent)override {
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
@@ -344,7 +334,7 @@ protected:
         setViewportStateCreateInfo(viewportState);
     }
     
-    bool createPipeline(VkPipelineCreateFlagBits flag) {
+    bool createPipeline(VkPipelineCreateFlagBits flag)override {
         descriptorSetLayout = new DescriptorSetLayout(app, shaderSet);
         pipelineLayout->create(descriptorSetLayout->getDescriptorSetLayout());
         

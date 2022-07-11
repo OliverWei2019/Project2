@@ -10,7 +10,7 @@
 #include <glm/vec4.hpp>
 #include "VKApp.h"
 #include "Buffer.h"
-struct Vertex {
+class Vertex {
     glm::vec3 position;
     glm::vec4 color;
 
@@ -44,11 +44,14 @@ public:
     VertexBuffer(VKApp* vkApp) :BufferBase(vkApp) {
 
     }
-    virtual ~VertexBuffer();
+    virtual ~VertexBuffer() {
+
+    }
 public:
-    void release() {
+    virtual void release() {
         indexBuffer->release();
         BufferBase::release();
+        delete this;
     }
 
     void create(const std::vector<float>& vertices, int32_t size,
@@ -118,7 +121,8 @@ private:
             false,
             VK_BUFFER_USAGE_TRANSFER_DST_BIT | (vertex ? VK_BUFFER_USAGE_VERTEX_BUFFER_BIT : VK_BUFFER_USAGE_INDEX_BUFFER_BIT),
             VMA_MEMORY_USAGE_AUTO);
-        gpuBuffer->copyBufferFrom(stagingBuffer->getBuffer(), bufferSize);
+        auto tempBuffer = stagingBuffer->getBuffer();
+        gpuBuffer->copyBufferFrom(tempBuffer, bufferSize);
         stagingBuffer->release();
         return gpuBuffer;
     }

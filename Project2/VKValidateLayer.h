@@ -49,7 +49,9 @@ public:
         :vkApp(vk_App),vkDebug(debug) {
        
     }
-    ~VKValidationLayer();
+    ~VKValidationLayer() {
+
+    }
 
     void release() {
         delete this;

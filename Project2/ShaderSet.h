@@ -65,7 +65,17 @@ public:
     VkVertexInputBindingDescription* getVertexInputBindingDescriptionData() {
         return vertexInputBindingDescriptions.data();
     }
+    VkDescriptorSetLayoutBinding createDescriptorSetLayoutBinding(uint32_t bindindex, 
+        VkDescriptorType type, 
+        VkShaderStageFlagBits flag) {
+        VkDescriptorSetLayoutBinding bindingInfo{};
+        bindingInfo.binding = bindindex;
+        bindingInfo.descriptorCount = 1;
+        bindingInfo.descriptorType = type;
+        bindingInfo.stageFlags = flag;
 
+        return bindingInfo;
+    }
     void addDescriptorSetLayoutBinding(const VkDescriptorSetLayoutBinding& binding) {
         descriptorSetLayoutBindings.push_back(binding);
         VkDescriptorPoolSize poolSize;
@@ -175,13 +185,11 @@ private:
         auto shaderCode = readDataFromFile(spvFile);
         
         VkShaderModuleCreateInfo createInfo{};
-        VkShaderModuleCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         createInfo.codeSize = shaderCode.size();
         //字节码的指针是uint32_t 类型，而不是char 类型。
         createInfo.pCode = reinterpret_cast<const uint32_t*>(shaderCode.data());
 
-        VkShaderModule shaderModule;
         if (vkCreateShaderModule(app->getDevice()->getLogicalDevice(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
             throw std::runtime_error("failed to create shader module!");
         }

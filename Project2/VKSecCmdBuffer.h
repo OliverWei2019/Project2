@@ -4,6 +4,10 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 #include "VKApp.h"
+#include "VKRenderPass.h"
+#include "VKDevices.h"
+#include "VKSwapChain.h"
+#include "VKCmdPool.h"
 
 class VKSecCmdBuffer
 {

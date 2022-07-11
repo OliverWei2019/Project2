@@ -14,15 +14,19 @@
 #include "VKValidateLayer.h"
 #include "VKDevices.h"
 #include "VKCmdPool.h"
+#include "PoolBase.h"
 #include "VKSwapChain.h"
 #include "VKPipelineCache.h"
 #include "VKRenderPass.h"
+#include "PipeLineBase.h"
 #include "Pipeline.h"
 #include "VertexBuffer.h"
 #include "QueryPool.h"
 #include "VKImages.h"
 #include "VKImageView.h"
 #include "Sampler.h"
+#include "LoadObjects.h"
+
 
 class App:public VKApp {
 
@@ -44,7 +48,12 @@ public:
     ~App() {
         glfwTerminate();
     }
-    bool run() {
+    void release() override
+    {
+        delete vkAllocator;
+        delete this;
+    }
+    bool run() override {
         //static double time = glfwGetTime();
         while (!glfwWindowShouldClose(window)) {
             glfwPollEvents();
@@ -118,6 +127,7 @@ private:
     std::vector<VkFence> imagesInFlight;
     std::list<VKSampler*> SamplerList;
     std::list< VKImageView*> ImageViewList;
+    std::list<VKImages*> ImagesList;
 
     size_t currentFrame = 0;
     bool needUpdateSwapChain = false;
@@ -145,7 +155,7 @@ private:
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
         return window != nullptr;
     }
-    void initVulkan(const Config config) override {
+    void initVulkanRHI(const Config config) override {
         vkValidationLayer = new VKValidationLayer(this, appConfig.debug);
         createInstance();
         createSurface();
@@ -165,6 +175,11 @@ private:
          createSwapChain();
          createSwapChainImageViews();
          createPipelineCache();*/
+    }
+    void initVulkanRenderFrame()override {
+        renderpass = new  VKRenderPass(this);
+        renderpass->create();
+        renderpass->createFrameBuffers();
     }
     void createInstance() override {
         //1 检查验证层是否支持
@@ -204,21 +219,21 @@ private:
         }
     }
 
-    Pipeline* createPipeline(VKShaderSet* shaderSet)
+    Pipeline* createPipeline(VKShaderSet* shaderSet) override
     {
         auto pipeline = new Pipeline(this, shaderSet);
         pipeline->prepare();
         PipeLines.push_back(pipeline);
         return pipeline;
     }
-    VKShaderSet* createShaderSet()
+    VKShaderSet* createShaderSet() override
     {
         auto shaderSet = new VKShaderSet(this);
         shaders.push_back(shaderSet);
         return shaderSet;
     }
     VertexBuffer* createVertexBuffer(const std::vector<float>& vertices, uint32_t count,
-        const std::vector<uint32_t>& indices, bool indirectDraw)
+        const std::vector<uint32_t>& indices, bool indirectDraw) override
     {
         auto vertexBuffer = new VertexBuffer(this);
         vertexBuffer->create(vertices, count, indices, indirectDraw);
@@ -227,22 +242,38 @@ private:
     }
 
     VertexBuffer* createVertexBuffer(const std::vector<Vertex>& vertices,
-        const std::vector<uint32_t>& indices, bool indirectDraw)
+        const std::vector<uint32_t>& indices, bool indirectDraw) override
     {
         auto vertexBuffer = new VertexBuffer(this);
         vertexBuffer->create(vertices, indices, indirectDraw);
         vkBuffers.push_back(vertexBuffer);
         return vertexBuffer;
     }
+    VertexBuffer* createVertexBuffer(const std::string& filename, bool zero,
+        bool indirectDraw) override{
+        VKOBJLoader* loader = new VKOBJLoader(this);
+        if (!loader->load(filename, zero)) {
+            loader->release();
+            return nullptr;
+        }
 
-    bool createGraphicsPipeline()
+        auto data = loader->getData();
+        if (!data.empty()) {
+            loader->create(data[0], 8, std::vector<uint32_t>(), indirectDraw);
+        }
+        vkBuffers.push_back(loader);
+        return loader;
+    }
+
+
+    bool createGraphicsPipeline() override
     {
         for (auto pipeline : PipeLines)
             pipeline->create();
         return true;
     }
     VKQueryPool* createQueryPool(uint32_t count, VkQueryPipelineStatisticFlags flag,
-        std::function<void(const std::vector<uint64_t>&)> callback)
+        std::function<void(const std::vector<uint64_t>&)> callback) override
     {
         if (queryPool)
             return queryPool;
@@ -250,7 +281,8 @@ private:
         queryPool->setQueryCallback(callback);
         return queryPool;
     }
-    bool recordCommandBuffers()
+    
+    bool recordCommandBuffers() override
     {
         commandBuffers.resize(this->getSwapChain()->getSwapChainSize());
 
@@ -320,7 +352,7 @@ private:
         return true;
     }
     bool createSecondaryCommandBuffer(uint32_t secondaryCommandBufferCount,
-        std::shared_ptr<VKSecondaryCommandBufferCallback> caller)
+        std::shared_ptr<VKSecondaryCommandBufferCallback> caller) override
     {
         if (secondaryCommandBufferCount == 0)
             return false;
@@ -363,7 +395,7 @@ private:
         }
         return true;
     }
-    void createSyncObjects()
+    void createSyncObjects() override
     {
         auto count = config.maxFramsInFlight;
         imageAvailableSemaphores.resize(count);
@@ -390,7 +422,7 @@ private:
             }
         }
     }
-    VKSampler* createSampler(const VkSamplerCreateInfo& samplerInfo)
+    VKSampler* createSampler(const VkSamplerCreateInfo& samplerInfo) override
     {
         auto sampler = new VKSampler(this);
         if (!sampler->create(samplerInfo)) {
@@ -406,8 +438,7 @@ private:
         SamplerList.remove(sampler);
     }
 
-    VKImageView* createImageView(VkImageViewCreateInfo& viewCreateInfo,
-        uint32_t mipLevels)
+    VKImageView* createImageView(VkImageViewCreateInfo& viewCreateInfo) override
     {
         auto imageView = new VKImageView(this);
         
@@ -418,13 +449,21 @@ private:
         ImageViewList.push_back(imageView);
         return imageView;
     }
-
-    void removeImageView(VKImageView* imageView)
+    VKImages* createImage(const std::string& file) override {
+        auto textureImage = new VKImages(this);
+        if (!textureImage->load(file)) {
+            textureImage->release();
+            return nullptr;
+        }
+        ImagesList.push_back(textureImage);
+        return textureImage;
+    }
+    void removeImageView(VKImageView* imageView) override 
     {
         ImageViewList.remove(imageView);
     }
 
-    void cleanupSwapChain() {
+    void cleanupSwapChain() override {
         renderpass->clearAttachSet();
         if (!secondaryCommandBuffers.empty()) {
             for (auto SecCmdBuffer : secondaryCommandBuffers)
@@ -445,7 +484,7 @@ private:
             shader->clearUniformBuffer();
         }
     }
-    void cleanup() {
+    void cleanup() override {
         if (queryPool) {
             queryPool->release();
             queryPool = nullptr;
@@ -480,7 +519,7 @@ private:
         glfwTerminate();
     }
 
-    void recreateSwapChain() {
+    void recreateSwapChain() override {
         int width = 0, height = 0;
         glfwGetFramebufferSize(window, &width, &height);
         while (width == 0 || height == 0) {
@@ -508,7 +547,7 @@ private:
         imagesInFlight.resize(swapChain->getSwapChainSize(), VK_NULL_HANDLE);
     }
 
-    bool drawFrame() {
+    bool drawFrame() override {
         for (auto pipeline : PipeLines) {
             if (pipeline->needRecreate() || needUpdateSwapChain) {
                 recreateSwapChain();
@@ -637,12 +676,7 @@ private:
     //    }
     //}
     //
-    void mainLoop() {
-
-    }
-    void cleanup() {
-
-    }
+    
 
 public:
     VmaAllocator getAllocator() override {
@@ -670,14 +704,14 @@ public:
     VKPipelineCache* getPipelineCache() const override {
         return PCO;
     }
-    VKCmdPool* getCmdPool() const override {
+    PoolBase* getCmdPool() const override {
         return CmdPool;
     }
 
     VKRenderPass* getRenderPass() const override {
         return renderpass;
     }
-    Pipeline* getPipeline(uint32_t index) const override {
+    PipeLineBase* getPipeline(uint32_t index) const override {
         if(!PipeLines.empty())
             return PipeLines[index];
         return nullptr;
@@ -688,6 +722,7 @@ public:
         }
         return;
     }
+    
 private:
     std::vector<const char*> getRequiredExtensions() {
         //利用GLFW创建窗口系统交互的扩展
@@ -705,4 +740,10 @@ private:
 
     }
 };
+
+VKApp* creatApp(const VKAppConfig& Appconfig, const Config& vkconfig)
+{
+    return new App(Appconfig, vkconfig);
+}
+
 #endif// _APPLICATION_H

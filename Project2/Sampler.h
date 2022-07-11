@@ -12,7 +12,9 @@ public:
     VKSampler(VKApp* vkApp):app(vkApp) {
 
     }
-    ~VKSampler();
+    ~VKSampler() {
+
+    }
 public:
     bool create(const VkSamplerCreateInfo& samplerInfo) {
         if (vkCreateSampler(app->getDevice()->getLogicalDevice(), 
@@ -33,8 +35,8 @@ public:
         delete this;
     }
 
-    VkSampler getSampler() {
-        return textureSampler;
+    VkSampler* getSampler() {
+        return &textureSampler;
     }
 private:
     VKApp* app = nullptr;

@@ -5,7 +5,7 @@
 #include <memory>
 #include <map>
 #include <set>
-#include<optional>
+#include <optional>
 #include <vulkan/vulkan.h>
 #include "VKApp.h"
 #include "VKUtil.h"
@@ -160,7 +160,7 @@ private:
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
         createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 
-        createInfo.pEnabledFeatures = &logicalFeatures;
+        createInfo.pEnabledFeatures = &deviceFeatures;//logicalFeatures
 
         ////≤ª∆Ù”√¿©’π
         //createInfo.enabledExtensionCount = 0;

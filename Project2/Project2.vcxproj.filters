@@ -116,5 +116,14 @@
     <ClInclude Include="Sampler.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="LoadObjects.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PoolBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PipeLineBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

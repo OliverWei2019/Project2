@@ -4,12 +4,16 @@
 #define VK_IMAGES_H
 #include <string>
 #include <vulkan/vulkan.h>
+
+#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include "VKApp.h"
 #include "VMAllocator.h"
 #include "VKCmdPool.h"
 #include "VKDevices.h"
 #include "initializers.h"
+#include "Buffer.h"
+#include "VKCmdPool.h"
 
 class VKImages {
 
@@ -45,7 +49,57 @@ public:
         imageInfo.flags = 0;
         return imageInfo;
     }
-    //bool load(const std::string& filename);
+    bool load(const std::string& filename) {
+        int texWidth, texHeight, texChannels;
+        stbi_uc* pixels = stbi_load(filename.c_str(),
+            &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        VkDeviceSize imageSize = texWidth * texHeight * 4;
+        if (!pixels) {
+            throw std::runtime_error("failed to load texture image!");
+        }
+        auto mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texHeight, texWidth)))) + 1;
+
+        VKBuffer* stagingBuffer = new VKBuffer(app,
+            imageSize,
+            true,
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            VMA_MEMORY_USAGE_AUTO);
+
+        VmaAllocator allocator = app->getAllocator();
+        void* gpuData;
+        vmaMapMemory(allocator, stagingBuffer->getAllocation(), &gpuData);
+        memcpy(gpuData, pixels, (size_t)imageSize);
+        vmaUnmapMemory(allocator, stagingBuffer->getAllocation());
+        
+        stbi_image_free(pixels);
+        if (!createImage(static_cast<uint32_t>(texWidth),
+            static_cast<uint32_t>(texHeight),
+            VK_SAMPLE_COUNT_1_BIT,
+            static_cast<uint32_t>(mipLevels),
+            VK_FORMAT_R8G8B8A8_SRGB,
+            VK_IMAGE_TILING_OPTIMAL,
+            VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+            VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+            VK_IMAGE_USAGE_SAMPLED_BIT |
+            VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)) {
+            std::cerr << "Faild to create texture image!" << std::endl;
+            return false;
+        }
+        //先改变textureImage的布局
+        transitionImageLayout(VK_IMAGE_LAYOUT_UNDEFINED, 
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
+        //从暂存复制图像到VkImage
+        copyBufferToImage(stagingBuffer->getBuffer(), image,
+            texWidth, texHeight);
+        //transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
+        generateMipmaps(image, VK_FORMAT_R8G8B8A8_SRGB,
+            static_cast<int32_t>(texWidth), 
+            static_cast<int32_t>(texHeight), 
+            mipLevels);
+        //释放暂存缓冲区
+        stagingBuffer->release();
+        return true;
+    }
     bool createImage(uint32_t width, uint32_t height,
         VkSampleCountFlagBits sample, uint32_t miplevels,
         VkFormat format,VkImageTiling tiling, 
@@ -258,6 +312,9 @@ public:
     }
     uint32_t getMipLevel() {
         return imageInfo.mipLevels;
+    }
+    VkFormat getImageFormat() {
+        return imageInfo.format;
     }
     VmaAllocation getImageAllocation() {
         return alloc;

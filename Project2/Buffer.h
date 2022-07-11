@@ -5,6 +5,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include "VKApp.h"
+#include "PoolBase.h"
 
 class VKBuffer {
 public:
@@ -62,6 +63,7 @@ public:
 
 		app->getCmdPool()->endSingleTimeCommands(commandBuffer, app->getDevice()->getGraphicsQueue());
 	}
+	
 private:
 	VKApp* app = nullptr;
 	VkBuffer buffer;
@@ -79,7 +81,7 @@ public:
 
 	}
 public:
-	void release() {
+	virtual void release() {
 		if (buffer) {
 			buffer->release();
 			buffer = nullptr;
