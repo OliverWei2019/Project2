@@ -46,6 +46,7 @@ namespace initializers{
 
     VkAttachmentDescription createAttachsDescription() {
         VkAttachmentDescription attachsDescription;
+        attachsDescription.flags = 1;
         attachsDescription.format = VK_FORMAT_R8G8B8A8_UNORM;
         attachsDescription.samples = VK_SAMPLE_COUNT_1_BIT;
         attachsDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;

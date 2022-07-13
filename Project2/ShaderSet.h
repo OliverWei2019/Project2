@@ -97,20 +97,25 @@ public:
         return descriptorPoolSizes.data();
     }
     void updateDescriptorPoolSize(int32_t size) {
-        for (auto poolSize : descriptorPoolSizes) {
-            poolSize.descriptorCount = size;
+        if (size > 1) {
+            for (size_t i = 0; i < descriptorPoolSizes.size(); i++) {
+                descriptorPoolSizes[i].descriptorCount = static_cast<uint32_t>(size);
+            }
+        }
+        else {
+            throw std::runtime_error("poolSize descriptor count is not greater than 0!");
         }
     }
 
     bool addShader(const std::string& spvFile, VkShaderStageFlagBits shaderStage,
         const char* entryPoint = "main") {
         auto Shader = createShaderModule(spvFile);
-        
-        for (auto stage : shaderStageCreateInfos) {
-            if (stage.stage == shaderStage) {
+        for (size_t i = 0; i < shaderStageCreateInfos.size(); i++) {
+            if (shaderStageCreateInfos[i].stage == shaderStage) {
                 return false;
             }
         }
+        
         VkPipelineShaderStageCreateInfo shaderStageInfo = {};
         shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         shaderStageInfo.stage = shaderStage;//¿É±à³Ì½×¶ÎÄÚ
@@ -153,11 +158,11 @@ public:
     bool isValid() {
         bool hasVert = false;
         bool hasFrag = false;
-        for (auto stage : shaderStageCreateInfos) {
-            if (stage.stage == VK_SHADER_STAGE_VERTEX_BIT) {
+        for (size_t i = 0; i < shaderStageCreateInfos.size(); i++) {
+            if (shaderStageCreateInfos[i].stage == VK_SHADER_STAGE_VERTEX_BIT) {
                 hasVert = true;
             }
-            if (stage.stage == VK_SHADER_STAGE_FRAGMENT_BIT) {
+            if (shaderStageCreateInfos[i].stage == VK_SHADER_STAGE_FRAGMENT_BIT) {
                 hasFrag = true;
             }
         }

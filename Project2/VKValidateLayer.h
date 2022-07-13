@@ -90,7 +90,16 @@ public:
         vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
         //检查validationLayers是否全部在availableLayers中
-        for (const char* layerName : validationLayers) {
+        for (const auto& layerProperties : availableLayers) {
+            if (isValidationLayer(layerProperties.layerName)) {
+                char* ptr = new char[100];
+                memset(ptr, 0, 100);
+                memcpy(ptr, layerProperties.layerName, strlen(layerProperties.layerName));
+                validationLayers.push_back(ptr);
+                return true;
+            }
+        }
+        /*for (const char* layerName : validationLayers) {
             bool layerFound = false;
             for (const auto& layerProperties : availableLayers) {
                 if (strcmp(layerName, layerProperties.layerName) == 0) {
@@ -101,7 +110,7 @@ public:
             if (!layerFound) {
                 return false;
             }
-        }
+        }*/
         return true;
     }
     bool setupDebugMessenger(VkInstance instance) {

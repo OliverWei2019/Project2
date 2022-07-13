@@ -42,7 +42,7 @@ class App:public VKApp {
 public:
     App(const VKAppConfig& Appconfig, const Config& vkconfig) :appConfig(Appconfig),config(vkconfig) {
         glfwInit();
-        vkAllocator = new VKAllocator();
+        //vkAllocator = new VKAllocator();
         //deviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     }
     ~App() {
@@ -50,7 +50,8 @@ public:
     }
     void release() override
     {
-        delete vkAllocator;
+        vmaDestroyAllocator(Allocator);
+        //delete vkAllocator;
         delete this;
     }
     bool run() override {
@@ -60,7 +61,6 @@ public:
 
             if (!drawFrame())
                 break;
-            //std::cout << "fps:" << 1 / (glfwGetTime() - time) << std::endl;
             //time = glfwGetTime();
         }
 
@@ -74,10 +74,10 @@ private:
     VKAppConfig appConfig;
     Config config;
     //memory allocate
-    VKAllocator* vkAllocator = nullptr;
+    //VKAllocator* vkAllocator = nullptr;
     //窗口；
     GLFWwindow* window = nullptr;
-    bool resize = false;
+    bool resize = true;
     bool framebufferResized = false;
     //vk实例
     VkInstance instance = nullptr;
@@ -105,7 +105,7 @@ private:
     //shader集合
     std::vector<VKShaderSet*> shaders;
     //vertex buffer vector
-    std::vector<VertexBuffer*> vkBuffers;
+    std::vector<BufferBase*> vkBuffers;
     //cmdbuffer vector and secondery cmd buffer  vector
     std::vector<VkCommandBuffer> commandBuffers;
     std::vector<VKSecCmdBuffer*> secondaryCommandBuffers;
@@ -180,6 +180,7 @@ private:
         renderpass = new  VKRenderPass(this);
         renderpass->create();
         renderpass->createFrameBuffers();
+        createSyncObjects();
     }
     void createInstance() override {
         //1 检查验证层是否支持
@@ -211,7 +212,9 @@ private:
         if (result != VK_SUCCESS) {
             throw std::runtime_error("failed to create instance!");
         }
-        vkValidationLayer->setupDebugMessenger(instance);
+        if (!vkValidationLayer->setupDebugMessenger(instance)) {
+            throw std::runtime_error("failed to setup debug messenger!");
+        }
     }
     void createSurface() override {
         if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
@@ -221,10 +224,10 @@ private:
 
     Pipeline* createPipeline(VKShaderSet* shaderSet) override
     {
-        auto pipeline = new Pipeline(this, shaderSet);
-        pipeline->prepare();
-        PipeLines.push_back(pipeline);
-        return pipeline;
+        auto pipeLine = new Pipeline(this, shaderSet);
+        pipeLine->prepare();
+        PipeLines.push_back(pipeLine);
+        return pipeLine;
     }
     VKShaderSet* createShaderSet() override
     {
@@ -232,7 +235,7 @@ private:
         shaders.push_back(shaderSet);
         return shaderSet;
     }
-    VertexBuffer* createVertexBuffer(const std::vector<float>& vertices, uint32_t count,
+    BufferBase* createVertexBuffer(const std::vector<float>& vertices, uint32_t count,
         const std::vector<uint32_t>& indices, bool indirectDraw) override
     {
         auto vertexBuffer = new VertexBuffer(this);
@@ -241,7 +244,7 @@ private:
         return vertexBuffer;
     }
 
-    VertexBuffer* createVertexBuffer(const std::vector<Vertex>& vertices,
+    BufferBase* createVertexBuffer(const std::vector<Vertex>& vertices,
         const std::vector<uint32_t>& indices, bool indirectDraw) override
     {
         auto vertexBuffer = new VertexBuffer(this);
@@ -249,7 +252,7 @@ private:
         vkBuffers.push_back(vertexBuffer);
         return vertexBuffer;
     }
-    VertexBuffer* createVertexBuffer(const std::string& filename, bool zero,
+    BufferBase* createVertexBuffer(const std::string& filename, bool zero,
         bool indirectDraw) override{
         VKOBJLoader* loader = new VKOBJLoader(this);
         if (!loader->load(filename, zero)) {
@@ -530,11 +533,12 @@ private:
         vkDeviceWaitIdle(Device->getLogicalDevice());
 
         cleanupSwapChain();
-
+        //swapChain = new VKSwapChain(this);
+        swapChain->create();
         for (auto shaderSet : shaders)
             shaderSet->initUniformBuffer();
 
-        swapChain = new VKSwapChain(this);
+        //swapChain = new VKSwapChain(this);
         renderpass = new VKRenderPass(this);
         renderpass->create();
         renderpass->createFrameBuffers();
@@ -555,11 +559,14 @@ private:
             }
         }
 
-        vkWaitForFences(Device->getLogicalDevice(), 
-            1, 
-            &inFlightFences[currentFrame], 
-            VK_TRUE, 
-            UINT64_MAX);
+        if (vkWaitForFences(Device->getLogicalDevice(),
+            1,
+            &inFlightFences[currentFrame],
+            VK_TRUE,
+            UINT64_MAX) != VK_SUCCESS) {
+            std::cerr << "waiting fences faild!" << std::endl;
+            return false;
+        }
 
         uint32_t imageIndex;
         VkResult result = vkAcquireNextImageKHR(Device->getLogicalDevice(), 
@@ -582,7 +589,7 @@ private:
             queryPool->query();
         }
 
-        currentFrameIndex++;
+        //currentFrameIndex++;
 
         //captureImage(imageIndex);
 
@@ -650,33 +657,6 @@ private:
         return true;
     }
 
-    //void captureImage(uint32_t imageIndex)
-    //{
-    //    if (captureScreen) {
-    //        captureScreen = false;
-    //        std::stringstream stream;
-    //        stream << "capture-";
-    //        stream << currentFrameIndex;
-    //        stream << ".tif";
-
-    //        VkImage image = swapChain->getSwapChainImage(imageIndex);
-
-    //        auto cmd = CmdPool->beginSingleTimeCommands();
-    //        adjustImageLayout(cmd, image, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-    //            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,0);
-
-    //        CmdPool->endSingleTimeCommands(cmd, Device->getGraphicsQueue());
-    //        writeFile(this, stream.str(), image, getSwapChainExtent().width,
-    //            getSwapChainExtent().height);
-
-    //        cmd = getCommandPool()->beginSingleTimeCommands();
-    //        adjustImageLayout(cmd, image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-    //            VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-    //        getCommandPool()->endSingleTimeCommands(cmd, graphicsQueue);
-    //    }
-    //}
-    //
-    
 
 public:
     VmaAllocator getAllocator() override {

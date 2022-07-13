@@ -30,28 +30,28 @@ public:
     //virtual DynamicState* getDynamicState() = 0;
 
     virtual void setVertexInputStateCreateInfo(const VkPipelineVertexInputStateCreateInfo& createInfo) = 0;
-    virtual VkPipelineVertexInputStateCreateInfo getVertexInputStateCreateInfo() = 0;
+    virtual VkPipelineVertexInputStateCreateInfo getVertexInputStateCreateInfo()const = 0;
 
     virtual void setInputAssemblyStateCreateInfo(const VkPipelineInputAssemblyStateCreateInfo& createInfo) = 0;
-    virtual VkPipelineInputAssemblyStateCreateInfo getInputAssemblyStateCreateInfo() = 0;
+    virtual VkPipelineInputAssemblyStateCreateInfo getInputAssemblyStateCreateInfo()const = 0;
 
     virtual void setRasterizationStateCreateInfo(const VkPipelineRasterizationStateCreateInfo& createInfo) = 0;
-    virtual VkPipelineRasterizationStateCreateInfo getRasterizationStateCreateInfo() = 0;
+    virtual VkPipelineRasterizationStateCreateInfo getRasterizationStateCreateInfo()const = 0;
 
-    virtual VkPipelineDepthStencilStateCreateInfo getDepthStencilStateCreateInfo() = 0;
+    virtual VkPipelineDepthStencilStateCreateInfo getDepthStencilStateCreateInfo()const = 0;
     virtual void setDepthStencilStateCreateInfo(const VkPipelineDepthStencilStateCreateInfo& createInfo) = 0;
 
     virtual void setTessellationStateCreateInfo(const VkPipelineTessellationStateCreateInfo& createInfo) = 0;
-    virtual VkPipelineTessellationStateCreateInfo getTessellationStateCreateInfo() = 0;
+    virtual VkPipelineTessellationStateCreateInfo getTessellationStateCreateInfo()const = 0;
 
     virtual void setMultisampleStateCreateInfo(const VkPipelineMultisampleStateCreateInfo& createInfo) = 0;
-    virtual VkPipelineMultisampleStateCreateInfo getMultisampleStateCreateInfo() = 0;
+    virtual VkPipelineMultisampleStateCreateInfo getMultisampleStateCreateInfo()const = 0;
 
     virtual void setColorBlendStateCreateInfo(const VkPipelineColorBlendStateCreateInfo& createInfo) = 0;
-    virtual VkPipelineColorBlendStateCreateInfo getColorBlendStateCreateInfo() = 0;
+    virtual VkPipelineColorBlendStateCreateInfo getColorBlendStateCreateInfo()const = 0;
 
     virtual void setViewportStateCreateInfo(const VkPipelineViewportStateCreateInfo& createInfo) = 0;
-    virtual VkPipelineViewportStateCreateInfo getViewportStateCreateInfo() = 0;
+    virtual VkPipelineViewportStateCreateInfo getViewportStateCreateInfo() const = 0;
 
 public:
     virtual void prepare() = 0;

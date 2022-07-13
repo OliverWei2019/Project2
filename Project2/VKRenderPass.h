@@ -17,14 +17,15 @@ public:
     void create() {
         attachsSet = new AttachmentSet(app);
         attachsSet->generateAttachmentsDescriptionSet();
+        attachsSet->createAttachments();
 
         subpass = new subpassSet(app);
         attachmentsRef attachsRef{};
         //颜色附件引用 + 深度附件引用
         attachsRef.colorAttachRef.push_back({ 0,VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL });
         attachsRef.depthAttachRef.push_back({ 1,VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL });
-        attachsRef.inputAttachRef.push_back({});
-        subpass->addAttachRef(&attachsRef);
+        //attachsRef.inputAttachRef.push_back({});
+        subpass->addAttachRef(attachsRef);
         subpass->generateSubpassDescription();
         //子通道依赖
         VkSubpassDependency dependency = {};
@@ -63,9 +64,8 @@ public:
         frameBuffers.resize(app->getSwapChain()->getSwapChainSize());
         for (size_t i = 0; i < frameBuffers.size(); i++) {
             std::vector<VkImageView> Attachs = {
-            attachsSet->getColorAttachs(i)->imageVIew->getImageView(),
+            app->getSwapChain()->getSwapChainImageView(i)->getImageView(),
             attachsSet->getDepthAttachs(i)->imageVIew->getImageView(),
-            app->getSwapChain()->getSwapChainImageView(i)->getImageView()
             };
             VkFramebufferCreateInfo framebufferInfo{};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;

@@ -20,14 +20,10 @@ struct Attachments {
 	FrameBufferAttachment* position = VK_NULL_HANDLE;
 	FrameBufferAttachment* normal = VK_NULL_HANDLE;
 	FrameBufferAttachment* albedo = VK_NULL_HANDLE;
-	int32_t width;
-	int32_t height;
+	int32_t width = 800;
+	int32_t height = 600;
 };
-struct attachmentsRef {
-	std::vector< VkAttachmentReference> colorAttachRef;
-	std::vector< VkAttachmentReference> depthAttachRef;
-	std::vector< VkAttachmentReference> inputAttachRef;
-};
+
 class AttachmentSet {
 public:
 	AttachmentSet(VKApp* vkApp) :app(vkApp) {
@@ -37,11 +33,8 @@ public:
 
 	}
 public:
-	void createFrameBufferAttach(VkFormat format, VkImageUsageFlags usage, FrameBufferAttachment* attachment) {
-		if (attachment->image->getImage() != VK_NULL_HANDLE) {
-			clearFrameBufferAttach(attachment);
-		}
-
+	FrameBufferAttachment* createFrameBufferAttach(VkFormat format, VkImageUsageFlags usage) {
+		FrameBufferAttachment* attachment = new FrameBufferAttachment();
 		VkImageAspectFlags aspectMask = 0;
 		VkImageLayout imageLayout;
 
@@ -54,7 +47,7 @@ public:
 		}
 		if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 		{
-			aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+			aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 			imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		}
 
@@ -73,28 +66,27 @@ public:
 		attachment->imageVIew = new VKImageView(app);
 		attachment->imageVIew->createImageView(viewInfo);
 		attachment->imageVIew->setLayout(imageLayout);
+		return attachment;
 	}
 	void clearFrameBufferAttach(FrameBufferAttachment* attachment) {
-		if(attachment->image)
+		if (attachment) {
 			attachment->image->release();
-		attachment->image == nullptr;
-		if(attachment->imageVIew)
 			attachment->imageVIew->release();
-		attachment->imageVIew = nullptr;
+			attachment->image = nullptr;
+			attachment->imageVIew = nullptr;
+			delete attachment;
+		}
 	}
 	void creatGbufferAttachments() {
 		//world space positions
-		createFrameBufferAttach(VK_FORMAT_R16G16B16A16_SFLOAT, 
-			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 
-			(GbufferAttachments.position));
+		GbufferAttachments.position = createFrameBufferAttach(VK_FORMAT_R16G16B16A16_SFLOAT,
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 		//world space normals
-		createFrameBufferAttach(VK_FORMAT_R16G16B16A16_SFLOAT, 
-			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 
-			GbufferAttachments.normal);
+		GbufferAttachments.normal = createFrameBufferAttach(VK_FORMAT_R16G16B16A16_SFLOAT,
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 		//albedo color
-		createFrameBufferAttach(VK_FORMAT_R8G8B8A8_UNORM, 
-			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 
-			GbufferAttachments.albedo);
+		GbufferAttachments.albedo = createFrameBufferAttach(VK_FORMAT_R8G8B8A8_UNORM,
+			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
 		VkExtent2D extent = app->getSwapChain()->getSwapChainExtent();
 		GbufferAttachments.width = extent.width;
 		GbufferAttachments.height = extent.height;
@@ -126,15 +118,15 @@ public:
 			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 
 		for (uint32_t i = 0; i < framesCount; i++) {
-			createFrameBufferAttach(VK_FORMAT_R8G8B8A8_UNORM,
-				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-				AttachsColor[i]);
-			createFrameBufferAttach(VK_FORMAT_R8G8B8A8_UNORM,
-				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-				AttachsNormal[i]);
-			createFrameBufferAttach(depthFormat,
-				VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-				AttachsDepth[i]);
+			/*AttachsColor[i] = createFrameBufferAttach(VK_FORMAT_R8G8B8A8_UNORM,
+				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);*/
+			/*
+			AttachsNormal[i] = createFrameBufferAttach(VK_FORMAT_R8G8B8A8_UNORM,
+				VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);*/
+
+			AttachsDepth[i] = createFrameBufferAttach(depthFormat,
+				VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+
 		}
 	}
 	void destroyAttachments() {
@@ -194,7 +186,7 @@ public:
 	}
 public:
 	uint32_t getAttachmentsCount() {
-		return attachmentDescriptionSet.size();
+		return static_cast<uint32_t>(attachmentDescriptionSet.size());
 	}
 	VkAttachmentDescription* getAttachmentsDescriptionData() {
 		return attachmentDescriptionSet.data();

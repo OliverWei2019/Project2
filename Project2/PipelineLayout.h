@@ -46,7 +46,7 @@ public:
         }
         VkDevice device = app->getDevice()->getLogicalDevice();
         if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-            std::runtime_error("fail to create pipeline layout!");
+            throw std::runtime_error("fail to create pipeline layout!");
             
         }
         return;
@@ -66,7 +66,7 @@ public:
     }
     void release() {
         destroy();
-        delete this;
+        //delete this;
     }
 private:
     void destroy() {

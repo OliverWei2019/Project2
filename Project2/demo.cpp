@@ -10,6 +10,7 @@
 #include <glm/mat4x4.hpp>
 
 #include <iostream>
+#include <chrono>
 #include "Application.h"
 VKApp* app = nullptr;
 Pipeline* pipeline = nullptr;
@@ -36,8 +37,10 @@ uint32_t updateUniformBufferData(char*& data, uint32_t size) {
     ubo.proj = glm::perspective(glm::radians(45.0f), (float)extent.width / (float)extent.height, 0.1f, 10.0f);
     //glm÷–Y÷·µπ÷√
     ubo.proj[1][1] *= -1;
-
-    memcpy(data, &ubo, size);
+    //std::cout << static_cast<void*>(&ubo) << std::endl;
+    //std::cout << static_cast<void*>(&ubo.model[0][0]) << std::endl;
+    memcpy(data, &ubo.model[0][0], size);
+    //std::cout << sizeof(ubo) << std::endl;
     return sizeof(ubo);
 }
 
@@ -47,7 +50,7 @@ int main() {
     appConfig.debug = true;
     Config config;
 
-    VKApp* app = creatApp(appConfig, config);
+    app = creatApp(appConfig, config);
     app->initWindow();
 
     app->initVulkanRHI(config);
@@ -89,21 +92,28 @@ int main() {
     ubo->setWriteDataCallback(updateUniformBufferData);
 
     auto texture = app->createImage("D:/VulKan/Vulkanstart/textures/viking_room.png");
+    auto samplerInfo = initializers::createSamplerCreateInfo(texture->getMipLevel());
+    auto sampler = app->createSampler(samplerInfo);
+
     auto textureViewInfo = initializers::createImageViewCreateInfo();
     textureViewInfo.image = texture->getImage();
     textureViewInfo.format = texture->getImageFormat();
     textureViewInfo.subresourceRange.levelCount = texture->getMipLevel();
     auto textureView = app->createImageView(textureViewInfo);
+    textureView->setLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    textureView->setSampler(*(sampler->getSampler()));
     shaders->addImageView(textureView);
 
-    auto samplerInfo = initializers::createSamplerCreateInfo(texture->getMipLevel());
-    auto sampler = app->createSampler(samplerInfo);
 
     app->initVulkanRenderFrame();
 
     pipeline = app->createPipeline(shaders);
+    //pipeline->prepare();
+    pipeline->getDynamicState()->addDynamicState(VK_DYNAMIC_STATE_VIEWPORT);
+    pipeline->getDynamicState()->addDynamicState(VK_DYNAMIC_STATE_SCISSOR);
     pipeline->create();
-
+    pipeline->getDynamicState()->applyDynamicViewport({ 0, 0, 480, 480, 0, 1 });
+    pipeline->getDynamicState()->applyDynamicScissor({ {0,0},{480,480} });
     auto vertexbuffer = app->createVertexBuffer("D:/VulKan/Vulkanstart/models/viking_room.obj", true, false);
     pipeline->addRenderBuffer(vertexbuffer);
     app->recordCommandBuffers();

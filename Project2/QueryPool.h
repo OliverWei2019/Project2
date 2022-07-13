@@ -13,7 +13,7 @@ class VKQueryPool
 {
 public:
     VKQueryPool() = delete;
-    VKQueryPool(VKApp* vkApp, uint32_t count, VkQueryPipelineStatisticFlags flag) {
+    VKQueryPool(VKApp* vkApp, uint32_t count, VkQueryPipelineStatisticFlags flag):app(vkApp) {
         VkQueryPoolCreateInfo queryPoolCreateInfo{};
         queryPoolCreateInfo.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
         queryPoolCreateInfo.queryType = VK_QUERY_TYPE_PIPELINE_STATISTICS;

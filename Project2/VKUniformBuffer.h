@@ -29,8 +29,8 @@ public:
             //context->createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             //    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i],
             //    uniformBuffersMemory[i]);
-
-            VKBuffer* buffer = new VKBuffer(app, bufferSize, false,VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO_PREFER_HOST);
+            //VMA_MEMORY_USAGE_AUTO_PREFER_HOST
+            VKBuffer* buffer = new VKBuffer(app, bufferSize, true,VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_AUTO);
             uniformBuffers[i] = buffer;
             bufferInfos[i].buffer = uniformBuffers[i]->getBuffer();
             bufferInfos[i].offset = 0;
@@ -58,9 +58,11 @@ public:
         if (!uniformBuffers.empty()) {
             for (size_t i = 0; i < uniformBuffers.size(); i++)
             {
-                uniformBuffers[i]->release();
+                if (uniformBuffers[i] != VK_NULL_HANDLE) {
+                    uniformBuffers[i]->release();
+                    uniformBuffers[i] = VK_NULL_HANDLE;
+                }
             }
-            uniformBuffers.clear();
         }
     }
 
@@ -77,26 +79,28 @@ public:
     }
 
     void update(uint32_t index) {
+        if (index >= uniformBuffers.size()) {
+            std::cerr << "input index over uniformbuffers size!" << std::endl;
+            return;
+        }
         if (!writeDataCallback) {
             std::cerr << "please set write data callback function" << std::endl;
         }
-
         char* userData = bufferData.data();
         uint32_t size = writeDataCallback(userData, bufferData.size());
         if (size != bufferData.size()) {
             std::cerr << "write data callback size error" << std::endl;
             return;
         }
-
-        void* gpuData;
-        vmaMapMemory(app->getAllocator(), uniformBuffers[index]->getAllocation(), &gpuData);
-        memcpy(gpuData, &userData, bufferSize);
-        vmaUnmapMemory(app->getAllocator(), uniformBuffers[index]->getAllocation());
+        auto allocator = app->getAllocator();
+        auto alloc = uniformBuffers[index]->getAllocation();
+        void* gpuData = nullptr;
+        if (vmaMapMemory(allocator, alloc, &gpuData) != VK_SUCCESS) {
+            throw std::runtime_error("vma failed map uniform buffer memory to gpuData!");
+        }
+        memcpy(gpuData, userData, bufferSize);
+        vmaUnmapMemory(allocator, alloc);
         return;
-        //void* gpuData = nullptr;
-        //vkMapMemory(context->getDevice(), uniformBuffersMemory[index], 0, bufferSize, 0, &gpuData);
-        //memcpy(gpuData, userData, bufferSize);
-        //vkUnmapMemory(context->getDevice(), uniformBuffersMemory[index]);
     }
 protected:
     VKApp* app = nullptr;

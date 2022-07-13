@@ -20,6 +20,7 @@ class VKSampler;
 class VKShaderSet;
 class Vertex;
 class VertexBuffer;
+class BufferBase;
 class VKQueryPool;
 class VKSecondaryCommandBufferCallback;
 class VKImageView;
@@ -38,11 +39,11 @@ public:
     virtual Pipeline* createPipeline(VKShaderSet* shaderSet) = 0;
     virtual VKShaderSet* createShaderSet() = 0;
     
-    virtual VertexBuffer* createVertexBuffer(const std::vector<float>& vertices, uint32_t count,
+    virtual BufferBase* createVertexBuffer(const std::vector<float>& vertices, uint32_t count,
         const std::vector<uint32_t>& indices, bool indirectDraw) = 0;
-    virtual VertexBuffer* createVertexBuffer(const std::vector<Vertex>& vertices,
+    virtual BufferBase* createVertexBuffer(const std::vector<Vertex>& vertices,
         const std::vector<uint32_t>& indices, bool indirectDraw) = 0;
-    virtual VertexBuffer* createVertexBuffer(const std::string& filename, bool zero,
+    virtual BufferBase* createVertexBuffer(const std::string& filename, bool zero,
         bool indirectDraw) = 0;
 
     

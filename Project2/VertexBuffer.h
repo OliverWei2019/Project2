@@ -85,7 +85,7 @@ public:
     }
     void render(VkCommandBuffer command) {
         VkBuffer vertexBuffers[] = { buffer->getBuffer() };
-        VkBuffer indexedBuffer = indexBuffer->getBuffer();
+        //VkBuffer indexedBuffer = indexBuffer->getBuffer();
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(command, 0, 1, vertexBuffers, offsets);
         if (!indexedVertex) {
@@ -93,6 +93,7 @@ public:
                 vkCmdDraw(command, count, 1, 0, 0);
         }
         else {
+            VkBuffer indexedBuffer = indexBuffer->getBuffer();
             vkCmdBindIndexBuffer(command, indexedBuffer, 0, VK_INDEX_TYPE_UINT32);
             if (!indirectDraw)
                 vkCmdDrawIndexed(command, static_cast<uint32_t>(count), 1, 0, 0, 0);
@@ -107,13 +108,15 @@ private:
         VKBuffer* stagingBuffer = new VKBuffer(app, 
             bufferSize, 
             true, 
-            VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+            VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VMA_MEMORY_USAGE_AUTO);
 
         VmaAllocator allocator = app->getAllocator();
         void* gpuData;
-        vmaMapMemory(allocator, stagingBuffer->getAllocation(), &gpuData);
-        memcpy(gpuData, &input, (size_t)bufferSize);
+        if (vmaMapMemory(allocator, stagingBuffer->getAllocation(), &gpuData) != VK_SUCCESS) {
+            throw std::runtime_error("failed to map staging buffer memory!");
+        }
+        memcpy(gpuData, input.data(), (size_t)bufferSize);
         vmaUnmapMemory(allocator, stagingBuffer->getAllocation());
         
         VKBuffer* gpuBuffer = new VKBuffer(app,

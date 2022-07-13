@@ -45,6 +45,30 @@ public:
     SwapChainSupportDetails getSwapChainSupportDetails() {
         return swapChainSupport;
     }
+    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) {
+        SwapChainSupportDetails details;
+        //查容量
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, app->getSurface(), &details.capabilities);
+
+        //查格式
+        uint32_t formatCount;
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, app->getSurface(), &formatCount, nullptr);
+
+        if (formatCount != 0) {
+            details.formats.resize(formatCount);
+            vkGetPhysicalDeviceSurfaceFormatsKHR(device, app->getSurface(), &formatCount, details.formats.data());
+        }
+
+        //查展示模式
+        uint32_t presentModeCount;
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, app->getSurface(), &presentModeCount, nullptr);
+
+        if (presentModeCount != 0) {
+            details.presentModes.resize(presentModeCount);
+            vkGetPhysicalDeviceSurfacePresentModesKHR(device, app->getSurface(), &presentModeCount, details.presentModes.data());
+        }
+        return details;
+    }
     VkPhysicalDeviceProperties getPhysicalDeviceProp() {
         return deviceProperties;
     }
@@ -67,6 +91,7 @@ public:
                 throw std::runtime_error("failed to find a supported format in candidates vector!");
             }
         }
+        return candidates[0];
     }
     void release() {
         if (device) {
@@ -130,7 +155,7 @@ private:
     //逻辑设备
     bool createLogicalDevice() {
         //查找已经绑定的物理设备的队列家族信息索引
-        QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+        indices = findQueueFamilies(physicalDevice);
         ////标明要创建的逻辑设备的队列的信息
         //VkDeviceQueueCreateInfo queueCreateInfo{};
         //queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -290,31 +315,6 @@ private:
 
         return requiredExtensions.empty();
     }
-    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) {
-        SwapChainSupportDetails details;
-        //查容量
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, app->getSurface(), &details.capabilities);
-
-        //查格式
-        uint32_t formatCount;
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, app->getSurface(), &formatCount, nullptr);
-
-        if (formatCount != 0) {
-            details.formats.resize(formatCount);
-            vkGetPhysicalDeviceSurfaceFormatsKHR(device, app->getSurface(), &formatCount, details.formats.data());
-        }
-
-        //查展示模式
-        uint32_t presentModeCount;
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, app->getSurface(), &presentModeCount, nullptr);
-
-        if (presentModeCount != 0) {
-            details.presentModes.resize(presentModeCount);
-            vkGetPhysicalDeviceSurfacePresentModesKHR(device, app->getSurface(), &presentModeCount, details.presentModes.data());
-        }
-        return details;
-    }
-   
 private:
     VKApp* app = nullptr; //external application
 

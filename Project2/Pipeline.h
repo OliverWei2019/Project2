@@ -3,6 +3,7 @@
 #define VK_PIPLELINE_H
 #include <list>
 #include <memory>
+#include <optional>
 #include <functional>
 #include <vulkan/vulkan.h>
 #include "VKApp.h"
@@ -40,10 +41,10 @@ public:
     }
 
     void setVertexInputStateCreateInfo(const VkPipelineVertexInputStateCreateInfo& createInfo) override {
-        vertexInputStateCreateInfo = createInfo;
+        vertexInputStateCreateInfo = std::make_optional(createInfo);
         needUpdate = true;
     }
-    VkPipelineVertexInputStateCreateInfo getVertexInputStateCreateInfo()override {
+    VkPipelineVertexInputStateCreateInfo getVertexInputStateCreateInfo()const override {
         if (vertexInputStateCreateInfo.has_value()) {
             return vertexInputStateCreateInfo.value();
         }
@@ -52,10 +53,10 @@ public:
     }
 
     void setInputAssemblyStateCreateInfo(const VkPipelineInputAssemblyStateCreateInfo& createInfo)override {
-        inputAssemblyStateCreateInfo = createInfo;
+        inputAssemblyStateCreateInfo = std::make_optional(createInfo);
         needUpdate = true;
     }
-    VkPipelineInputAssemblyStateCreateInfo getInputAssemblyStateCreateInfo()override {
+    VkPipelineInputAssemblyStateCreateInfo getInputAssemblyStateCreateInfo()const override {
         if (inputAssemblyStateCreateInfo.has_value()) {
             return inputAssemblyStateCreateInfo.value();
         }
@@ -64,10 +65,10 @@ public:
     }
 
     void setRasterizationStateCreateInfo(const VkPipelineRasterizationStateCreateInfo& createInfo)override {
-        rasterizationStateCreateInfo = createInfo;
+        rasterizationStateCreateInfo = std::make_optional(createInfo);
         needUpdate = true;
     }
-    VkPipelineRasterizationStateCreateInfo getRasterizationStateCreateInfo()override {
+    VkPipelineRasterizationStateCreateInfo getRasterizationStateCreateInfo()const override {
         if (rasterizationStateCreateInfo.has_value()) {
             return rasterizationStateCreateInfo.value();
         }
@@ -75,7 +76,7 @@ public:
         return parent->getRasterizationStateCreateInfo();
     }
 
-    VkPipelineDepthStencilStateCreateInfo getDepthStencilStateCreateInfo()override {
+    VkPipelineDepthStencilStateCreateInfo getDepthStencilStateCreateInfo()const override {
         if (depthStencilStateCreateInfo.has_value()) {
             return depthStencilStateCreateInfo.value();
         }
@@ -83,15 +84,15 @@ public:
         return parent->getDepthStencilStateCreateInfo();
     }
     void setDepthStencilStateCreateInfo(const VkPipelineDepthStencilStateCreateInfo& createInfo)override {
-        depthStencilStateCreateInfo = createInfo;
+        depthStencilStateCreateInfo = std::make_optional(createInfo);
         needUpdate = true;
     }
 
     void setTessellationStateCreateInfo(const VkPipelineTessellationStateCreateInfo& createInfo)override {
-        tessellationStateCreateInfo = createInfo;
+        tessellationStateCreateInfo = std::make_optional(createInfo);
         needUpdate = true;
     }
-    VkPipelineTessellationStateCreateInfo getTessellationStateCreateInfo()override {
+    VkPipelineTessellationStateCreateInfo getTessellationStateCreateInfo()const override {
         if (tessellationStateCreateInfo.has_value()) {
             return tessellationStateCreateInfo.value();
         }
@@ -100,10 +101,10 @@ public:
     }
 
     void setMultisampleStateCreateInfo(const VkPipelineMultisampleStateCreateInfo& createInfo)override {
-        multiSampleStateCreateInfo = createInfo;
+        multiSampleStateCreateInfo = std::make_optional(createInfo);
         needUpdate = true;
     }
-    VkPipelineMultisampleStateCreateInfo getMultisampleStateCreateInfo()override {
+    VkPipelineMultisampleStateCreateInfo getMultisampleStateCreateInfo()const override {
         if (multiSampleStateCreateInfo.has_value()) {
             return multiSampleStateCreateInfo.value();
         }
@@ -112,10 +113,10 @@ public:
     }
 
     void setColorBlendStateCreateInfo(const VkPipelineColorBlendStateCreateInfo& createInfo)override {
-        colorBlendStateCreateInfo = createInfo;
+        colorBlendStateCreateInfo = std::make_optional(createInfo);
         needUpdate = true;
     }
-    VkPipelineColorBlendStateCreateInfo getColorBlendStateCreateInfo()override {
+    VkPipelineColorBlendStateCreateInfo getColorBlendStateCreateInfo()const override {
         if (colorBlendStateCreateInfo.has_value()) {
             return colorBlendStateCreateInfo.value();
         }
@@ -124,10 +125,10 @@ public:
     }
 
     void setViewportStateCreateInfo(const VkPipelineViewportStateCreateInfo& createInfo)override {
-        viewportStateCreateInfo = createInfo;
+        viewportStateCreateInfo = std::make_optional(createInfo);
         needUpdate = true;
     }
-    VkPipelineViewportStateCreateInfo getViewportStateCreateInfo()override {
+    VkPipelineViewportStateCreateInfo getViewportStateCreateInfo()const override {
         if (viewportStateCreateInfo.has_value()) {
             return viewportStateCreateInfo.value();
         }
@@ -144,7 +145,9 @@ public:
         initColorBlendAttachmentState();
         initColorBlendStateCreateInfo();
         initDepthStencilStateCreateInfo();
-        initViewportStateCreateInfo(app->getSwapChain()->getSwapChainExtent());
+        auto extent = app->getSwapChain()->getSwapChainExtent();
+        initViewportStateCreateInfo(extent);
+        return;
     }
     void addPushConstant(const VkPushConstantRange& constantRange, const char* data)override {
         pipelineLayout->addPushConstant(constantRange, data);
@@ -228,7 +231,7 @@ public:
             descriptorSetLayout->release();
             descriptorPool->release();
         }
-        pipeline = nullptr;
+        //pipeline = nullptr;
     }
 
 public:
@@ -332,14 +335,15 @@ public:
         viewportState.scissorCount = 1;
         viewportState.pScissors = &scissor;
         setViewportStateCreateInfo(viewportState);
+        return;
     }
     
-    bool createPipeline(VkPipelineCreateFlagBits flag)override {
+    bool createPipeline(VkPipelineCreateFlagBits flag) override {
         descriptorSetLayout = new DescriptorSetLayout(app, shaderSet);
         pipelineLayout->create(descriptorSetLayout->getDescriptorSetLayout());
         
-        size_t poolSize = app->getSwapChain()->getSwapChainSize();
-        shaderSet->updateDescriptorPoolSize(poolSize);
+        //size_t poolSize = app->getSwapChain()->getSwapChainSize();
+        //shaderSet->updateDescriptorPoolSize(poolSize);
         descriptorPool = new DescriptorPool(app);
         descriptorPool->create(shaderSet);
 
@@ -355,6 +359,7 @@ public:
         auto depthStencilState = getDepthStencilStateCreateInfo();
         auto viewportState = getViewportStateCreateInfo();
         auto multiSampleState = getMultisampleStateCreateInfo();
+
         auto dynamicState = getDynamicState()->createDynamicStateCreateInfo(0);
         auto parentPipeline =  parent ? parent->pipeline : nullptr;
 
@@ -386,7 +391,7 @@ public:
         return true;
     }
 
-protected:
+public:
     VKApp* app = nullptr;
     VKShaderSet* shaderSet = nullptr;
     Pipeline* parent = nullptr;

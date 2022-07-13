@@ -46,9 +46,9 @@ public:
                 descriptorWrite.push_back(uniform->createWriteDescriptorSet(static_cast<uint32_t>(i), descriptorSets[i]));
             }
             for (auto imageview : imageViews) {
-                descriptorWrite.push_back(imageview.first->createWriteDescriptorSet(descriptorSets[i],static_cast<uint32_t>(i)));
+                descriptorWrite.push_back(imageview.first->createWriteDescriptorSet(descriptorSets[i],static_cast<uint32_t>(imageview.second)));
             }
-            vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorSets.size()), descriptorWrite.data(), 0, nullptr);
+            vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrite.size()), &descriptorWrite[0], 0, nullptr);
         }
     }
 

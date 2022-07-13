@@ -8,6 +8,7 @@
 #include "VKDevices.h"
 #include "VKSwapChain.h"
 #include "VKCmdPool.h"
+#include "vk_mem_alloc.h"
 
 class VKSecCmdBuffer
 {

@@ -10,7 +10,7 @@
 class VKBuffer {
 public:
 	VKBuffer() = delete;
-	VKBuffer(VKApp* vkApp, VkDeviceSize size, bool isupload,
+	VKBuffer(VKApp* vkApp, VkDeviceSize size, bool needupload,
 		VkBufferUsageFlags usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 		VmaMemoryUsage memusage = VMA_MEMORY_USAGE_AUTO) :app(vkApp) {
 
@@ -18,15 +18,16 @@ public:
 		bufferInfo.size = size;
 		bufferInfo.usage = usage;
 
-		VmaAllocationCreateInfo allocInfo = {};
-		allocInfo.usage = memusage;
-		if (isupload) {
-			allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+		VmaAllocationCreateInfo allocCreateInfo = {};
+		allocCreateInfo.usage = memusage;
+		if (needupload) {
+			allocCreateInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT ;
 		}
-
 		//VkBuffer buffer;
-		//VmaAllocation allocation;
-		vmaCreateBuffer(app->getAllocator(), &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
+		VmaAllocationInfo allocInfo;
+		if (vmaCreateBuffer(app->getAllocator(), &bufferInfo, &allocCreateInfo, &buffer, &allocation, &allocInfo) != VK_SUCCESS) {
+			throw std::runtime_error("Faild to create buffer!");
+		}
 	}
 
 	~VKBuffer() {
@@ -36,8 +37,8 @@ public:
 	void release() {
 		if (buffer) {
 			vmaDestroyBuffer(app->getAllocator(), buffer, allocation);
+			buffer = nullptr;
 		}
-		buffer = nullptr;
 		delete this;
 	}
 	VKApp* getApp() {
@@ -89,10 +90,14 @@ public:
 		delete  this;
 	}
 	VkBuffer getBuffer() {
-		return buffer->getBuffer();
+		if(buffer)
+			return buffer->getBuffer();
+		return VK_NULL_HANDLE;
 	}
 	VmaAllocation getVmaAllocation() {
-		return buffer->getAllocation();
+		if (buffer)
+			return buffer->getAllocation();
+		return VK_NULL_HANDLE;
 	}
 	virtual void render(VkCommandBuffer command) = 0;
 public:

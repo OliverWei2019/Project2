@@ -10,6 +10,7 @@
 #include "VKApp.h"
 #include "VKUtil.h"
 #include "VKValidateLayer.h"
+
 #include "VKAllocator.h"
 #include "VKImageView.h"
 
@@ -34,7 +35,7 @@ public:
             DestroySwapChainImageViews();
             DestroySwapChain();
         }
-        delete this;
+        //delete this;
     }
     VkSwapchainKHR getSwapChain() {
         return swapChain;
@@ -63,7 +64,7 @@ public:
         return surface;
     }
     uint32_t getSwapChainSize() {
-        return swapChainImageViews.size();
+        return static_cast<uint32_t>(swapChainImageViews.size());
     }
     VKImageView* getSwapChainImageView(uint32_t index) {
         if (swapChainImageViews.empty()) {
@@ -93,7 +94,7 @@ private:
         }
         VkSwapchainCreateInfoKHR createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        createInfo.surface = surface; //°ó¶¨surface
+        createInfo.surface = app->getSurface(); //°ó¶¨surface
         createInfo.minImageCount = imageCount;
         createInfo.imageFormat = surfaceFormat.format;
         createInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -132,7 +133,9 @@ private:
             &createInfo, 
             nullptr,
             &swapChain) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create swap chain!");
+            std::cerr << "failed to create swap chain!" << std::endl;
+            return false;
+            //throw std::runtime_error("failed to create swap chain!");
         }
         if (vkGetSwapchainImagesKHR(app->getDevice()->getLogicalDevice(),
             swapChain,
