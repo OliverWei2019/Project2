@@ -83,7 +83,7 @@ public:
         if (imageView)
             vkDestroyImageView(app->getDevice()->getLogicalDevice(), imageView, nullptr);
         imageView = VK_NULL_HANDLE;
-        delete this;
+        //delete this;
     }
 public:
     VkWriteDescriptorSet createWriteDescriptorSet(VkDescriptorSet descriptorSet, uint32_t binding = 1) {

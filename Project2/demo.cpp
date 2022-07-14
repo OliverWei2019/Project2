@@ -127,5 +127,6 @@ int main() {
         return EXIT_FAILURE;
     }
     app->release();
+    std::cout << "iiii" << std::endl;
     return EXIT_SUCCESS;
 }

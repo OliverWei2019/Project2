@@ -49,9 +49,11 @@ public:
     }
 public:
     virtual void release() {
-        indexBuffer->release();
+        if(indexBuffer)
+            indexBuffer->release();
+        indexBuffer = nullptr;
         BufferBase::release();
-        delete this;
+        //delete this;
     }
 
     void create(const std::vector<float>& vertices, int32_t size,

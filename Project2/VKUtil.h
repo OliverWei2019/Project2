@@ -125,7 +125,7 @@ void cleanVulkanObjectContainer(C& container)
         auto itr = container.begin();
         if (itr == container.end())
             break;
-        else
+        else if((*itr))
             (*itr)->release();
     }
 }

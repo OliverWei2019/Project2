@@ -492,14 +492,25 @@ private:
             queryPool->release();
             queryPool = nullptr;
         }
-        cleanVulkanObjectContainer(vkBuffers);
+        if (!vkBuffers.empty()) {
+            for (size_t i = 0; i < vkBuffers.size(); i++) {
+                if (vkBuffers[i]) {
+                    vkBuffers[i]->release();
+                }
+            }
+        }
         vkBuffers.clear();
         PCO->saveGraphicsPiplineCache(config.pipelineCacheFile);
         PCO->release();
 
         cleanupSwapChain();
-
-        cleanVulkanObjectContainer(shaders);
+        if (!shaders.empty()) {
+            for (size_t i = 0; i < shaders.size(); i++) {
+                if (shaders[i]) {
+                    shaders[i]->release();
+                }
+            }
+        }
         shaders.clear();
         cleanVulkanObjectContainer(SamplerList);
         cleanVulkanObjectContainer(ImageViewList);

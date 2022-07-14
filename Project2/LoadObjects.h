@@ -172,7 +172,7 @@ public:
             data.clear();
         }
         VertexBuffer::release();
-        delete this;
+        //delete this;
     }
 private:
     glm::vec3 minPosition;
